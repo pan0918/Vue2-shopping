@@ -1,27 +1,46 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import Login from '@/views/login'
+import Layout from '@/views/layout'
+import Search from '@/views/search'
+import SearchList from '@/views/search/list'
+import Prodetail from '@/views/prodetail'
+import Pay from '@/views/pay'
+import Myorder from '@/views/myorder'
 
 Vue.use(VueRouter)
 
-const routes = [
-  {
-    path: '/',
-    name: 'home',
-    component: HomeView
+const router = new VueRouter({
+  routes: [{
+    path: '/login',
+    component: Login
   },
   {
-    path: '/about',
-    name: 'about',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
+    path: '/',
+    component: Layout
+  },
+  {
+    path: '/search',
+    component: Search
+  },
+  {
+    path: '/searchlist',
+    component: SearchList
+  },
+  // 动态路由传参
+  {
+    path: '/prodetail/:id',
+    component: Prodetail
+  },
+  {
+    path: '/pay',
+    component: Pay
+  },
+  {
+    path: '/myorder',
+    component: Myorder
   }
-]
-
-const router = new VueRouter({
-  routes
+  ]
 })
 
 export default router
