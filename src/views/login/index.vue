@@ -28,18 +28,18 @@
           <img v-if="picUrl" :src="picUrl" @click="getPicCode" alt="" />
         </div>
         <div class="form-item">
-          <input class="inp" placeholder="请输入短信验证码" type="text" />
+          <input v-model="smsCode" class="inp" placeholder="请输入短信验证码" type="text" />
           <button @click="getCode">{{ second === totalSecond ? '获取验证码' : second + '秒后重新发送' }}</button>
         </div>
       </div>
 
-      <div class="login-btn">登录</div>
+      <div @click="login" class="login-btn">登录</div>
     </div>
   </div>
 </template>
 
 <script>
-import { getPicCode, getMsgCode } from '@/api/login'
+import { getPicCode, getMsgCode, codeLogin } from '@/api/login'
 // import { Toast } from '@/utils/vant-ui'
 
 export default {
@@ -52,7 +52,8 @@ export default {
       totalSecond: 60,
       second: 60,
       timer: null,
-      mobile: ''
+      mobile: '',
+      smsCode: ''
     }
   },
   methods: {
@@ -76,6 +77,7 @@ export default {
       }
       return true
     },
+
     // 获取短信验证码
     async getCode () {
       if (!this.validFn()) {
@@ -98,6 +100,24 @@ export default {
           }
         }, 1000)
       }
+    },
+
+    // 登陆
+    async login () {
+      if (!this.validFn()) {
+        return
+      }
+
+      if (!/^\d{6}$/.test(this.smsCode)) {
+        this.$toast('请输入正确的手机验证码！')
+      }
+
+      const res = await codeLogin(this.mobile, this.smsCode)
+      this.$store.commit('user/setUserInfo', res.data)
+
+      this.$toast('登陆成功！')
+
+      this.$router.push('/')
     }
   },
 
