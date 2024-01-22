@@ -16,6 +16,7 @@ import User from '@/views/layout/user'
 
 Vue.use(VueRouter)
 
+// 路由设置
 const router = new VueRouter({
   routes: [{
     path: '/login',

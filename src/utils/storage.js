@@ -1,5 +1,6 @@
 // 约定键名
 const infoKey = 'vue2-shopping'
+const historyKey = 'vue2-history'
 
 // 获取个人信息
 export const getInfo = () => {
@@ -16,4 +17,15 @@ export const setInfo = (obj) => {
 // 移除个人信息
 export const removeInfo = () => {
   localStorage.removeItem(infoKey)
+}
+
+// 获取搜索历史
+export const getHistoryList = () => {
+  const result = localStorage.getItem(historyKey)
+  return result ? JSON.parse(result) : []
+}
+
+// 设置搜索历史
+export const setHistoryList = (arr) => {
+  localStorage.setItem(historyKey, JSON.stringify(arr))
 }
