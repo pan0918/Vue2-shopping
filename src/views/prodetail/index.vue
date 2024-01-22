@@ -4,7 +4,7 @@
 
     <van-swipe :autoplay="3000" @change="onChange">
       <van-swipe-item v-for="(image, index) in images" :key="index">
-        <img :src="image" />
+        <img :src="image.external_url" />
       </van-swipe-item>
 
       <template #indicator>
@@ -16,13 +16,13 @@
     <div class="info">
       <div class="title">
         <div class="price">
-          <span class="now">￥0.01</span>
-          <span class="oldprice">￥6699.00</span>
+          <span class="now">￥{{ detail.goods_price_min }}</span>
+          <span class="oldprice">￥{{ detail.goods_price_max }}</span>
         </div>
-        <div class="sellcount">已售1001件</div>
+        <div class="sellcount">已售{{ detail.goods_sales }}件</div>
       </div>
       <div class="msg text-ellipsis-2">
-        三星手机 SAMSUNG Galaxy S23 8GB+256GB 超视觉夜拍系统 超清夜景 悠雾紫 5G手机 游戏拍照旗舰机s23
+         {{ detail.goods_name }}
       </div>
 
       <div class="service">
@@ -39,32 +39,28 @@
     <!-- 商品评价 -->
     <div class="comment">
       <div class="comment-title">
-        <div class="left">商品评价 (5条)</div>
+        <div class="left">商品评价 ({{ total }}条)</div>
         <div class="right">查看更多 <van-icon name="arrow" /> </div>
       </div>
       <div class="comment-list">
-        <div class="comment-item" v-for="item in 3" :key="item">
+        <div class="comment-item" v-for="item in commentList" :key="item.comment_id">
           <div class="top">
-            <img src="http://cba.itlike.com/public/uploads/10001/20230321/a0db9adb2e666a65bc8dd133fbed7834.png" alt="">
-            <div class="name">神雕大侠</div>
-            <van-rate :size="16" :value="5" color="#ffd21e" void-icon="star" void-color="#eee"/>
+            <img :src="item.user.avatar_url || defaultImg" alt="">
+            <div class="name">{{ item.user.nick_name }}</div>
+            <van-rate :size="16" :value="item.score / 2" color="#ffd21e" void-icon="star" void-color="#eee"/>
           </div>
           <div class="content">
-            质量很不错 挺喜欢的
+            {{ item.content }}
           </div>
           <div class="time">
-            2023-03-21 15:01:35
+            {{ item.create_time }}
           </div>
         </div>
       </div>
     </div>
 
     <!-- 商品描述 -->
-    <div class="desc">
-      <img src="https://uimgproxy.suning.cn/uimg1/sop/commodity/kHgx21fZMWwqirkMhawkAw.jpg" alt="">
-      <img src="https://uimgproxy.suning.cn/uimg1/sop/commodity/0rRMmncfF0kGjuK5cvLolg.jpg" alt="">
-      <img src="https://uimgproxy.suning.cn/uimg1/sop/commodity/2P04A4Jn0HKxbKYSHc17kw.jpg" alt="">
-      <img src="https://uimgproxy.suning.cn/uimg1/sop/commodity/MT4k-mPd0veQXWPPO5yTIw.jpg" alt="">
+    <div class="desc" v-html="detail.content">
     </div>
 
     <!-- 底部 -->
@@ -77,28 +73,97 @@
         <van-icon name="shopping-cart-o" />
         <span>购物车</span>
       </div>
-      <div class="btn-add">加入购物车</div>
-      <div class="btn-buy">立刻购买</div>
+      <div @click="addFn" class="btn-add">加入购物车</div>
+      <div @click="buyFn" class="btn-buy">立刻购买</div>
     </div>
+
+    <!-- 加入购物车弹层 -->
+    <van-action-sheet v-model="showPannel" :title="mode === 'cart' ? '加入购物车' : '立刻购买'">
+      <div class="product">
+        <div class="product-title">
+          <div class="left">
+            <img :src="detail.goods_image" alt="">
+          </div>
+          <div class="right">
+            <div class="price">
+              <span>¥</span>
+              <span class="nowprice">{{ detail.goods_price_min }}</span>
+            </div>
+            <div class="count">
+              <span>库存</span>
+              <span>{{ detail.stock_total }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="num-box">
+          <span>数量</span>
+          <CountBox v-model="addCount"></CountBox>
+        </div>
+
+        <div class="showbtn" v-if="detail.stock_total > 0">
+          <div class="btn" v-if="mode === 'cart'">加入购物车</div>
+          <div class="btn now" v-else>立刻购买</div>
+        </div>
+
+        <div class="btn-none" v-else>该商品已抢完</div>
+      </div>
+    </van-action-sheet>
   </div>
 </template>
 
 <script>
+import { getProComments, getProDetail } from '@/api/product'
+import defaultImg from '@/assets/default-avatar.png'
+import CountBox from '@/components/CountBox'
 export default {
   name: 'ProDetail',
+  components: {
+    CountBox
+  },
   data () {
     return {
-      images: [
-        'https://img01.yzcdn.cn/vant/apple-1.jpg',
-        'https://img01.yzcdn.cn/vant/apple-2.jpg'
-      ],
-      current: 0
+      images: [],
+      current: 0,
+      detail: {},
+      total: 0, // 评价总数
+      commentList: [], // 评价列表
+      defaultImg,
+      showPannel: false,
+      mode: 'cart',
+      addCount: 1 // 标记弹层状态 'cart' 和 'buyNow'
+    }
+  },
+  computed: {
+    goodsId () {
+      return this.$route.params.id
     }
   },
   methods: {
     onChange (index) {
       this.current = index
+    },
+    async getDetail () {
+      const { data: { detail } } = await getProDetail(this.goodsId)
+      this.detail = detail
+      this.images = detail.goods_images
+    },
+    async getComments () {
+      const { data: { list, total } } = await getProComments(this.goodsId, 3)
+      this.total = total
+      this.commentList = list
+    },
+    addFn () {
+      this.mode = 'cart'
+      this.showPannel = true
+    },
+    buyFn () {
+      this.mode = 'buyNow'
+      this.showPannel = true
     }
+  },
+  created () {
+    this.getDetail()
+    this.getComments()
   }
 }
 </script>
@@ -248,5 +313,54 @@ export default {
 
 .tips {
   padding: 10px;
+}
+
+// 弹层样式
+.product {
+  .product-title {
+    display: flex;
+    .left {
+      img {
+        width: 90px;
+        height: 90px;
+      }
+      margin: 10px;
+    }
+    .right {
+      flex: 1;
+      padding: 10px;
+      .price {
+        font-size: 14px;
+        color: #fe560a;
+        .nowprice {
+          font-size: 24px;
+          margin: 0 5px;
+        }
+      }
+    }
+  }
+
+  .num-box {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    align-items: center;
+  }
+
+  .btn, .btn-none {
+    height: 40px;
+    line-height: 40px;
+    margin: 20px;
+    border-radius: 20px;
+    text-align: center;
+    color: rgb(255, 255, 255);
+    background-color: rgb(255, 148, 2);
+  }
+  .btn.now {
+    background-color: #fe5630;
+  }
+  .btn-none {
+    background-color: #cccccc;
+  }
 }
 </style>

@@ -1,6 +1,6 @@
 // 按需导入vant-ui
 import Vue from 'vue'
-import { Rate, Icon, Search, Swipe, SwipeItem, Grid, GridItem, Button, Tabbar, TabbarItem, NavBar, Toast } from 'vant'
+import { ActionSheet, Rate, Icon, Search, Swipe, SwipeItem, Grid, GridItem, Button, Tabbar, TabbarItem, NavBar, Toast } from 'vant'
 
 Vue.use(Tabbar)
 Vue.use(TabbarItem)
@@ -14,3 +14,4 @@ Vue.use(Grid)
 Vue.use(GridItem)
 Vue.use(Icon)
 Vue.use(Rate)
+Vue.use(ActionSheet)
