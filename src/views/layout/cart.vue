@@ -5,7 +5,7 @@
     <div class="cart-title">
       <span class="all">共<i>{{ cartTotal }}</i>件商品</span>
       <span class="edit">
-        <van-icon name="edit" />
+        <van-icon @click="isEdit = !isEdit" name="edit" />
         编辑
       </span>
     </div>
@@ -13,7 +13,7 @@
     <!-- 购物车列表 -->
     <div class="cart-list">
       <div class="cart-item" v-for="item in cartLists" :key="item.goods_id">
-        <van-checkbox :value="item.isChecked"></van-checkbox>
+        <van-checkbox @click="toggleCheck(item.goods_id)" :value="item.isChecked"></van-checkbox>
         <div class="show">
           <img :src="item.goods.goods_image" alt="">
         </div>
@@ -21,15 +21,15 @@
           <span class="tit text-ellipsis-2">{{ item.goods.goods_name }}</span>
           <span class="bottom">
             <div class="price">¥ <span>{{ item.goods.goods_price_min }}</span></div>
-            <CountBox :value="item.goods_num"></CountBox>
+            <CountBox @input="(value) => changeCount(value, item.goods_id, item.goods_sku_id)" :value="item.goods_num"></CountBox>
           </span>
         </div>
       </div>
     </div>
 
     <div class="footer-fixed">
-      <div  class="all-check">
-        <van-checkbox  icon-size="18"></van-checkbox>
+      <div @click="toggleAllCheck" class="all-check">
+        <van-checkbox :value="isAllChecked" icon-size="18"></van-checkbox>
         全选
       </div>
 
@@ -38,8 +38,8 @@
           <span>合计：</span>
           <span>¥ <i class="totalPrice">{{ selPrice.toFixed(2) }}</i></span>
         </div>
-        <div v-if="true" class="goPay" :class="{ disabled: selCount === 0}">结算({{ selCount }})</div>
-        <div v-else class="delete" :class="{ disabled: selCount === 0}">删除</div>
+        <div v-if="!isEdit" class="goPay" :class="{ disabled: selCount === 0}">结算({{ selCount }})</div>
+        <div v-else @click="handleDel" class="delete" :class="{ disabled: selCount === 0}">删除</div>
       </div>
     </div>
   </div>
@@ -50,17 +50,51 @@ import CountBox from '@/components/CountBox'
 import { mapGetters, mapState } from 'vuex'
 export default {
   name: 'CartPage',
+  data () {
+    return {
+      isEdit: false
+    }
+  },
   components: {
     CountBox
   },
   computed: {
     ...mapState('cart', ['cartLists']),
-    ...mapGetters('cart', ['cartTotal', 'selCartList', 'selCount', 'selPrice'])
+    ...mapGetters('cart', ['cartTotal', 'selCartList', 'selCount', 'selPrice', 'isAllChecked'])
   },
   created () {
     // 登陆过的才能获取
     if (this.$store.getters.token) {
       this.$store.dispatch('cart/getCartAction')
+    }
+  },
+  methods: {
+    toggleCheck (goodsId) {
+      this.$store.commit('cart/toggleCheck', goodsId)
+    },
+    toggleAllCheck () {
+      this.$store.commit('cart/toggleAllCheck', !this.isAllChecked)
+    },
+    changeCount (goodsNum, goodsId, goodsSkuId) {
+      this.$store.dispatch('cart/changeCountAction', {
+        goodsNum,
+        goodsId,
+        goodsSkuId
+      })
+    },
+    async handleDel () {
+      if (this.selCount === 0) return
+      await this.$store.dispatch('cart/delSelect')
+      this.isEdit = false
+    }
+  },
+  watch: {
+    isEdit (value) {
+      if (value) {
+        this.$store.commit('cart/toggleAllCheck', false)
+      } else {
+        this.$store.commit('cart/toggleAllCheck', true)
+      }
     }
   }
 }
