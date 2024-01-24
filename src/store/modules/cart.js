@@ -1,4 +1,4 @@
-import { changeCount, getCartList, delSelect } from '@/api/cart'
+import { changeCount, getCartList, delSel } from '@/api/cart'
 import { Toast } from 'vant'
 
 export default {
@@ -44,9 +44,9 @@ export default {
       await changeCount(goodsId, goodsNum, goodsSkuId)
     },
     async delSelect (context) {
-      const selCartList = context.getters.selCartList
-      const cartIds = selCartList.map(item => item.id)
-      await delSelect(cartIds)
+      const cartList = context.getters.selCartList
+      const cartIds = cartList.map(item => item.id)
+      await delSel(cartIds)
       Toast('删除成功！')
 
       // 重新拉取数据

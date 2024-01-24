@@ -24,7 +24,7 @@ export const changeCount = (goodsId, goodsNum, goodsSkuId) => {
 }
 
 // 删除购物车商品
-export const delSelect = (cardIds) => {
+export const delSel = (cardIds) => {
   return request.post('/cart/clear', {
     cardIds
   })
